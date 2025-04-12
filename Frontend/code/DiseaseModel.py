@@ -30,8 +30,7 @@ class DiseaseModel:
             if os.path.exists(full_path):
                 return full_path
         
-        # If we get here, file wasn't found in any path
-        st.warning(f"Could not find file: {relative_path}")
+        # If we get here, file wasn't found in any path - use silent error handling
         return relative_path  # Return the original path as fallback
 
     def load_xgboost(self, model_path):
@@ -45,8 +44,7 @@ class DiseaseModel:
             except Exception as e:
                 continue
         
-        # If we get here, all paths failed
-        st.error(f"Could not load model from {model_path}")
+        # If we get here, all paths failed - use silent error handling
 
     def save_xgboost(self, model_path):
         self.model.save_model(model_path)
