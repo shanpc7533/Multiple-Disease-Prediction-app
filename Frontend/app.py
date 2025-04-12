@@ -30,12 +30,9 @@ def safe_load_model(model_filename):
     for base_path in POSSIBLE_PATHS:
         try:
             model_path = os.path.join(base_path, model_filename)
-            st.write(f"Trying to load from: {model_path}")  # Debug info
             model = joblib.load(model_path)
-            st.write(f"Successfully loaded from: {model_path}")  # Debug info
             return model
         except Exception as e:
-            st.write(f"Failed to load from {model_path}: {str(e)}")  # Debug info
             continue
     
     # If we get here, all paths failed
