@@ -13,16 +13,47 @@ from code.DiseaseModel import DiseaseModel
 from code.helper import prepare_symptoms_array
 import seaborn as sns
 import joblib
+import os
 
-# loading the models
-diabetes_model = joblib.load("models/diabetes_model.sav")
-heart_model = joblib.load("models/heart_disease_model.sav")
-parkinson_model = joblib.load("models/parkinsons_model.sav")
-lung_cancer_model = joblib.load('models/lung_cancer_model.sav')
-breast_cancer_model = joblib.load('models/breast_cancer.sav')
-chronic_disease_model = joblib.load('models/chronic_model.sav')
-hepatitis_model = joblib.load('models/hepititisc_model.sav')
-liver_model = joblib.load('models/liver_model.sav')
+# Define multiple possible base paths for model loading
+# This ensures paths work both locally and on Streamlit Cloud
+BASE_PATH = os.path.dirname(__file__)
+POSSIBLE_PATHS = [
+    BASE_PATH,
+    os.path.join(os.path.dirname(os.path.dirname(__file__)), 'Frontend'),
+    '/mount/src/multiple-disease-prediction-app/Frontend',
+    '.'
+]
+
+# Function to safely load models with multiple path attempts
+def safe_load_model(model_filename):
+    for base_path in POSSIBLE_PATHS:
+        try:
+            model_path = os.path.join(base_path, model_filename)
+            st.write(f"Trying to load from: {model_path}")  # Debug info
+            model = joblib.load(model_path)
+            st.write(f"Successfully loaded from: {model_path}")  # Debug info
+            return model
+        except Exception as e:
+            st.write(f"Failed to load from {model_path}: {str(e)}")  # Debug info
+            continue
+    
+    # If we get here, all paths failed
+    st.error(f"Could not load model {model_filename} from any path. Please check file paths.")
+    return None
+
+# loading the models with better error handling
+try:
+    diabetes_model = safe_load_model("models/diabetes_model.sav")
+    heart_model = safe_load_model("models/heart_disease_model.sav")
+    parkinson_model = safe_load_model("models/parkinsons_model.sav")
+    lung_cancer_model = safe_load_model('models/lung_cancer_model.sav')
+    breast_cancer_model = safe_load_model('models/breast_cancer.sav')
+    chronic_disease_model = safe_load_model('models/chronic_model.sav')
+    hepatitis_model = safe_load_model('models/hepititisc_model.sav')
+    liver_model = safe_load_model('models/liver_model.sav')
+except Exception as e:
+    st.error(f"Error loading models: {str(e)}")
 
 # sidebar
 with st.sidebar:
@@ -46,7 +77,7 @@ with st.sidebar:
 if selected == 'Disease Prediction': 
     # Create disease class and load ML model
     disease_model = DiseaseModel()
-    disease_model.load_xgboost('model/xgboost_model.json')
+    disease_model.load_xgboost(os.path.join(BASE_PATH, 'model/xgboost_model.json'))
 
     # Title
     st.write('# Disease Prediction using Machine Learning')
@@ -79,7 +110,7 @@ if selected == 'Disease Prediction':
 # Diabetes prediction page
 if selected == 'Diabetes Prediction':  # pagetitle
     st.title("Diabetes disease prediction")
-    image = Image.open('d3.jpg')
+    image = Image.open(os.path.join(BASE_PATH, 'd3.jpg'))
     st.image(image, caption='diabetes disease prediction')
     # columns
     # no inputs from the user
@@ -120,11 +151,11 @@ if selected == 'Diabetes Prediction':  # pagetitle
         # after the prediction is done if the value in the list at index is 0 is 1 then the person is diabetic
         if diabetes_prediction[0] == 1:
             diabetes_dig = "we are really sorry to say but it seems like you are Diabetic."
-            image = Image.open('positive.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'positive.jpg'))
             st.image(image, caption='')
         else:
             diabetes_dig = 'Congratulation,You are not diabetic'
-            image = Image.open('negative.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'negative.jpg'))
             st.image(image, caption='')
         st.success(name+' , ' + diabetes_dig)
         
@@ -135,7 +166,7 @@ if selected == 'Diabetes Prediction':  # pagetitle
 # Heart prediction page
 if selected == 'Heart disease Prediction':
     st.title("Heart disease prediction")
-    image = Image.open('heart2.jpg')
+    image = Image.open(os.path.join(BASE_PATH, 'heart2.jpg'))
     st.image(image, caption='heart failuire')
     # age	sex	cp	trestbps	chol	fbs	restecg	thalach	exang	oldpeak	slope	ca	thal	target
     # columns
@@ -242,12 +273,12 @@ if selected == 'Heart disease Prediction':
 
         if heart_prediction[0] == 1:
             heart_dig = 'we are really sorry to say but it seems like you have Heart Disease.'
-            image = Image.open('positive.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'positive.jpg'))
             st.image(image, caption='')
             
         else:
             heart_dig = "Congratulation , You don't have Heart Disease."
-            image = Image.open('negative.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'negative.jpg'))
             st.image(image, caption='')
         st.success(name +' , ' + heart_dig)
 
@@ -261,7 +292,7 @@ if selected == 'Heart disease Prediction':
 
 if selected == 'Parkison Prediction':
     st.title("Parkison prediction")
-    image = Image.open('p1.jpg')
+    image = Image.open(os.path.join(BASE_PATH, 'p1.jpg'))
     st.image(image, caption='parkinsons disease')
   # parameters
 #    name	MDVP:Fo(Hz)	MDVP:Fhi(Hz)	MDVP:Flo(Hz)	MDVP:Jitter(%)	MDVP:Jitter(Abs)	MDVP:RAP	MDVP:PPQ	Jitter:DDP	MDVP:Shimmer	MDVP:Shimmer(dB)	Shimmer:APQ3	Shimmer:APQ5	MDVP:APQ	Shimmer:DDA	NHR	HNR	status	RPDE	DFA	spread1	spread2	D2	PPE
@@ -327,18 +358,18 @@ if selected == 'Parkison Prediction':
 
         if parkinson_prediction[0] == 1:
             parkinson_dig = 'we are really sorry to say but it seems like you have Parkinson disease'
-            image = Image.open('positive.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'positive.jpg'))
             st.image(image, caption='')
         else:
             parkinson_dig = "Congratulation , You don't have Parkinson disease"
-            image = Image.open('negative.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'negative.jpg'))
             st.image(image, caption='')
         st.success(name+' , ' + parkinson_dig)
 
 
 
 # Load the dataset
-lung_cancer_data = pd.read_csv('data/lung_cancer.csv')
+lung_cancer_data = pd.read_csv(os.path.join(BASE_PATH, 'data/lung_cancer.csv'))
 
 # Convert 'M' to 0 and 'F' to 1 in the 'GENDER' column
 lung_cancer_data['GENDER'] = lung_cancer_data['GENDER'].map({'M': 'Male', 'F': 'Female'})
@@ -346,7 +377,7 @@ lung_cancer_data['GENDER'] = lung_cancer_data['GENDER'].map({'M': 'Male', 'F': '
 # Lung Cancer prediction page
 if selected == 'Lung Cancer Prediction':
     st.title("Lung Cancer Prediction")
-    image = Image.open('h.png')
+    image = Image.open(os.path.join(BASE_PATH, 'h.png'))
     st.image(image, caption='Lung Cancer Prediction')
 
     # Columns
@@ -429,11 +460,11 @@ if selected == 'Lung Cancer Prediction':
         # Display result
         if cancer_prediction[0] == 'YES':
             cancer_result = "The model predicts that there is a risk of Lung Cancer."
-            image = Image.open('positive.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'positive.jpg'))
             st.image(image, caption='')
         else:
             cancer_result = "The model predicts no significant risk of Lung Cancer."
-            image = Image.open('negative.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'negative.jpg'))
             st.image(image, caption='')
 
         st.success(name + ', ' + cancer_result)
@@ -444,7 +475,7 @@ if selected == 'Lung Cancer Prediction':
 # Liver prediction page
 if selected == 'Liver prediction':  # pagetitle
     st.title("Liver disease prediction")
-    image = Image.open('liver.jpg')
+    image = Image.open(os.path.join(BASE_PATH, 'liver.jpg'))
     st.image(image, caption='Liver disease prediction.')
     # columns
     # no inputs from the user
@@ -490,11 +521,11 @@ if selected == 'Liver prediction':  # pagetitle
 
         # after the prediction is done if the value in the list at index is 0 is 1 then the person is diabetic
         if liver_prediction[0] == 1:
-            image = Image.open('positive.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'positive.jpg'))
             st.image(image, caption='')
             liver_dig = "we are really sorry to say but it seems like you have liver disease."
         else:
-            image = Image.open('negative.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'negative.jpg'))
             st.image(image, caption='')
             liver_dig = "Congratulation , You don't have liver disease."
         st.success(name+' , ' + liver_dig)
@@ -507,7 +538,7 @@ if selected == 'Liver prediction':  # pagetitle
 # Hepatitis prediction page
 if selected == 'Hepatitis prediction':
     st.title("Hepatitis Prediction")
-    image = Image.open('h.png')
+    image = Image.open(os.path.join(BASE_PATH, 'h.png'))
     st.image(image, caption='Hepatitis Prediction')
 
     # Columns
@@ -571,11 +602,11 @@ if selected == 'Hepatitis prediction':
         # Display result
         if hepatitis_prediction[0] == 1:
             hepatitis_result = "We are really sorry to say but it seems like you have Hepatitis."
-            image = Image.open('positive.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'positive.jpg'))
             st.image(image, caption='')
         else:
             hepatitis_result = 'Congratulations, you do not have Hepatitis.'
-            image = Image.open('negative.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'negative.jpg'))
             st.image(image, caption='')
 
         st.success(name + ', ' + hepatitis_result)
@@ -593,7 +624,7 @@ if selected == 'Hepatitis prediction':
 # jaundice prediction page
 if selected == 'Jaundice prediction':  # pagetitle
     st.title("Jaundice disease prediction")
-    image = Image.open('j.jpg')
+    image = Image.open(os.path.join(BASE_PATH, 'j.jpg'))
     st.image(image, caption='Jaundice disease prediction')
     # columns
     # no inputs from the user
@@ -631,15 +662,15 @@ if selected == 'Jaundice prediction':  # pagetitle
     # button
     if st.button("Jaundice test result"):
         jaundice_prediction=[[]]
-        jaundice_prediction = jaundice_model.predict([[age,Sex,Total_Bilirubin,Direct_Bilirubin,Alkaline_Phosphotase,Alamine_Aminotransferase,Total_Protiens,Albumin]])
+        jaundice_prediction = hepatitis_model.predict([[age,Sex,Total_Bilirubin,Direct_Bilirubin,Alkaline_Phosphotase,Alamine_Aminotransferase,Total_Protiens,Albumin]])
 
         # after the prediction is done if the value in the list at index is 0 is 1 then the person is diabetic
         if jaundice_prediction[0] == 1:
-            image = Image.open('positive.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'positive.jpg'))
             st.image(image, caption='')
             jaundice_dig = "we are really sorry to say but it seems like you have Jaundice."
         else:
-            image = Image.open('negative.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'negative.jpg'))
             st.image(image, caption='')
             jaundice_dig = "Congratulation , You don't have Jaundice."
         st.success(name+' , ' + jaundice_dig)
@@ -771,11 +802,11 @@ if selected == 'Chronic Kidney prediction':
         kidney_prediction = chronic_disease_model.predict(user_input)
         # Display result
         if kidney_prediction[0] == 1:
-            image = Image.open('positive.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'positive.jpg'))
             st.image(image, caption='')
             kidney_prediction_dig = "we are really sorry to say but it seems like you have kidney disease."
         else:
-            image = Image.open('negative.jpg')
+            image = Image.open(os.path.join(BASE_PATH, 'negative.jpg'))
             st.image(image, caption='')
             kidney_prediction_dig = "Congratulation , You don't have kidney disease."
         st.success(name+' , ' + kidney_prediction_dig)
