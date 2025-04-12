@@ -35,7 +35,7 @@ def prepare_symptoms_array(symptoms):
             continue
     
     if dataset_path is None:
-        st.error("Could not find the dataset file. Please check file paths.")
+        # Silent error handling - don't show errors on the app
         return symptoms_array
     
     # Load the dataset
@@ -47,6 +47,7 @@ def prepare_symptoms_array(symptoms):
             symptoms_array[0, symptom_idx] = 1
             
     except Exception as e:
-        st.error(f"Error processing symptoms: {str(e)}")
+        # Silent error handling - don't show errors on the app
+        pass
     
     return symptoms_array
